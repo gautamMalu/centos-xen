@@ -4,15 +4,14 @@ set -euo pipefail
 IFS=$'\n\t'
 
 CUR_TIME=`date +%FT%TZ`
-CUSTOM_RPMS=./RPMS
-DVD_LAYOUT=/data/centos-7-iso-layout
-DVD_TITLE='CentOS-7-Joyent'
-ISO=CentOS-7-x86_64-Minimal.iso
+DVD_LAYOUT=/data/centos-6-xen-layout
+DVD_TITLE='CentOS-6-xen'
+ISO=CentOS-6.6-x86_64-netinstall.iso
 ISO_DIR=/data/fetched-iso
-ISO_FILENAME=./centos-7-joyent.iso
+ISO_FILENAME=./centos-6-xen.iso
 KS_CFG=./ks.cfg
-MIRROR=http://buildlogs.centos.org/rolling/7/isos/x86_64
-MOUNT_POINT=/mnt/centos7
+MIRROR=http://centosmirror.go4hosting.in/centos/6.6/isos/x86_64
+MOUNT_POINT=/mnt/centos6
 
 function fetch_iso() {
     if [ ! -d $ISO_DIR ]; then
@@ -21,21 +20,23 @@ function fetch_iso() {
     
     if [ ! -e $ISO_DIR/$ISO ]; then
         echo "No local copy of $ISO. Fetching latest $ISO"
-        curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
+        curl  -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
     
     echo "Checking to see if we have the latest $ISO:"
     echo "  Getting checksum"
-    curl -s -O $MIRROR/sha256sum.txt
+    curl  -O $MIRROR/sha256sum.txt
     
     ISO_NAME=$(echo $ISO | cut -f1 -d'.')
+    ISO_NAME=${ISO%.*}
+    echo $ISO_NAME
     CHECKSUM=$(grep $ISO_NAME sha256sum.txt | cut -f1 -d' ')
     
     if [[ $(sha256sum $ISO_DIR/$ISO | cut -f1 -d' ') == "$CHECKSUM" ]]; then
         echo "  Checksums match, using local copy of $ISO"
     else
         echo "  Checksums do not match. Fetching latest $ISO"
-        curl -s -o $ISO_DIR/$ISO $MIRROR/$ISO
+        curl  -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
 }
 
@@ -66,9 +67,6 @@ function create_layout() {
     tar cf - . | tar xpf - -C $DVD_LAYOUT
     popd > /dev/null 2>&1
     umount $MOUNT_POINT
-    echo "Copying custom RPMS"
-    find $CUSTOM_RPMS -type f -exec cp {} $DVD_LAYOUT/Packages \;
-    echo "Finished Populating Layout"
 }
 
 function copy_ks_cfg() {
@@ -76,38 +74,21 @@ function copy_ks_cfg() {
     cp $KS_CFG $DVD_LAYOUT/
 }
 
-function copy_guest_tools() {
-    echo "Copying sdc-vmtools"
-    cp -R ./sdc-vmtools/ $DVD_LAYOUT/ 
-}
-
-
 function modify_boot_menu() {
     echo "Modifying grub boot menu"
     cp ./isolinux.cfg $DVD_LAYOUT/isolinux/
 }
 
-function cleanup_layout() {
-    echo "Cleaning up $DVD_LAYOUT"
-    find $DVD_LAYOUT -name TRANS.TBL -exec rm '{}' +
-    COMPS_XML=`find $DVD_LAYOUT/repodata -name '*.xml' ! -name 'repomd.xml' -exec basename {} \;`
-    mv $DVD_LAYOUT/repodata/$COMPS_XML $DVD_LAYOUT/repodata/comps.xml 
-    find $DVD_LAYOUT/repodata -type f ! -name 'comps.xml' -exec rm '{}' +
-}
-
 function create_newiso() {
-    copy_guest_tools
-    cleanup_layout
+#    cleanup_layout
     copy_ks_cfg
     modify_boot_menu
     echo "Preparing NEW ISO"
     pushd $DVD_LAYOUT > /dev/null 2>&1
-    discinfo=`head -1 .discinfo`
-    createrepo -g repodata/comps.xml $DVD_LAYOUT
     echo "Creating NEW ISO"
     mkisofs -r -R -J -T -v \
      -no-emul-boot -boot-load-size 4 -boot-info-table \
-     -V "$DVD_TITLE" -p "Joyent" \
+     -V "$DVD_TITLE" -p "xen" \
      -A "$DVD_TITLE - $CUR_TIME" \
      -b isolinux/isolinux.bin -c isolinux/boot.cat \
      -x "lost+found" -o $ISO_FILENAME $DVD_LAYOUT
@@ -137,7 +118,7 @@ EOF
     exit 1
 }
 
-args=`getopt -o h -n 'build_centos_iso.sh' -- "$@"`
+args=`getopt -o h -n 'build_Xen_iso.sh' -- "$@"`
 
 if [[ $# == 0 ]]; then
     usage;
