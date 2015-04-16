@@ -49,9 +49,10 @@ Check it with by running xl info command.
 ## Default Settings For Image
 
 * Stock Kernel
+* Interactive mode
 * US Keyboard and Language
 * Firewall enabled with SSH allowed
-* Passwords are using SHA512
+* root password:password
 * Firstboot disabled
 * SELinux is set to disabled
 * Timezone is set to UTC+5:30
@@ -59,4 +60,4 @@ Check it with by running xl info command.
 
 
    * @core
-   * base
+   * @base
