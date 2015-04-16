@@ -1,7 +1,7 @@
 # Centos 6.6 Xen iso Builder
 
-This repo allows one to create a custom CentOS 6.6 which delivers Xen 4.4 stack for CentOS 6.6.
-It has been forked from [https://github.com/joyent/mi-centos-7]
+This repo allows one to create a custom CentOS 6.6 which delivers Xen 4.4 stack for CentOS 6.6 with libvirt and fully network bridge settings.
+
 
 ## Requirements
 
