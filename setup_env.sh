@@ -3,4 +3,4 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-yum install -y anaconda anaconda-runtime createrepo isomd5sum genisoimage rpmdevtools
+yum install -y createrepo isomd5sum genisoimage git

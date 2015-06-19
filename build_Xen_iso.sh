@@ -3,15 +3,17 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+MIRROR=http://centosmirror.go4hosting.in/centos/7/isos/x86_64
 CUR_TIME=`date +%FT%TZ`
-DVD_LAYOUT=/data/centos-6-xen-layout
-DVD_TITLE='CentOS-6-xen'
-ISO=CentOS-6.6-x86_64-netinstall.iso
-ISO_DIR=/data/fetched-iso
-ISO_FILENAME=./centos-6-xen.iso
-KS_CFG=./ks.cfg
-MIRROR=http://centosmirror.go4hosting.in/centos/6.6/isos/x86_64
-MOUNT_POINT=/mnt/centos6
+DVD_LAYOUT=./c7-min
+DVD_TITLE='C7-xen'
+UPDATES_IMAGE_DIR=/home/gautam/XenInBox
+ISO_DIR=./isos
+CUSTOM_RPMS=./rpms
+ISO_FILENAME=c7-xen.iso
+MOUNT_POINT=/mnt
+ISO=CentOS-7-x86_64-Minimal-1503-01.iso
+ANACONDA_DIR=./XenInBox
 
 function fetch_iso() {
     if [ ! -d $ISO_DIR ]; then
@@ -62,16 +64,13 @@ function create_layout() {
         mkdir $MOUNT_POINT
     fi
     mount $ISO_DIR/$ISO $MOUNT_POINT -o loop
-    pushd $MOUNT_POINT > /dev/null 2>&1
-    echo "Populating Layout"
-    tar cf - . | tar xpf - -C $DVD_LAYOUT
-    popd > /dev/null 2>&1
+    echo "Populating Layout"   
+    rsync -avp $MOUNT_POINT/ $DVD_LAYOUT/
     umount $MOUNT_POINT
-}
-
-function copy_ks_cfg() {
-    echo "Copying Kickstart file"
-    cp $KS_CFG $DVD_LAYOUT/
+    echo "Copying xen dependency RPMS"
+    rsync -avp $CUSTOM_RPMS/ $DVD_LAYOUT/Packages/
+    
+    echo "Finished Populating Layout"
 }
 
 function modify_boot_menu() {
@@ -79,23 +78,50 @@ function modify_boot_menu() {
     cp ./isolinux.cfg $DVD_LAYOUT/isolinux/
 }
 
+function update_anaconda(){
+     if [ ! -d $ANACONDA_DIR ]; then
+          git clone -b c7 https://github.com/gautamMalu/XenInBox
+     fi
+     pushd $ANACONDA_DIR > /dev/null 2>&1
+     git pull
+     ./scripts/makeupdates -t c7-working
+     popd > /dev/null 2>&1
+     echo "Copying updates.img"
+     cp $ANACONDA_DIR/updates.img $DVD_LAYOUT/
+     
+}
+
+function cleanup_layout() {
+    echo "Cleaning up $DVD_LAYOUT"
+    find $DVD_LAYOUT -name TRANS.TBL -exec rm '{}' +
+    COMPS_XML=`find $DVD_LAYOUT/repodata -name '*.xml' ! -name 'repomd.xml' -exec basename {} \;`
+    mv $DVD_LAYOUT/repodata/$COMPS_XML $DVD_LAYOUT/repodata/comps.xml 
+    find $DVD_LAYOUT/repodata -type f ! -name 'comps.xml' -exec rm '{}' +
+}
+
+
 function create_newiso() {
-#    cleanup_layout
-    copy_ks_cfg
     modify_boot_menu
+    update_anaconda
+    cleanup_layout
     echo "Preparing NEW ISO"
     pushd $DVD_LAYOUT > /dev/null 2>&1
+
+    discinfo=`head -1 .discinfo`
+    createrepo -v -g repodata/comps.xml .
     echo "Creating NEW ISO"
-    mkisofs -r -R -J -T -v \
+    genisoimage -r -R -J -T -v \
      -no-emul-boot -boot-load-size 4 -boot-info-table \
      -V "$DVD_TITLE" -p "xen" \
      -A "$DVD_TITLE - $CUR_TIME" \
      -b isolinux/isolinux.bin -c isolinux/boot.cat \
-     -x "lost+found" -o $ISO_FILENAME $DVD_LAYOUT
+     -x "lost+found" -o ../$ISO_DIR/$ISO_FILENAME .
     echo "Fixing up NEW ISO"
+    popd > /dev/null 2>&1    
+
     echo implantisomd5 $ISO_FILENAME
-    implantisomd5 $ISO_FILENAME
-    popd > /dev/null 2>&1
+    implantisomd5 $ISO_DIR/$ISO_FILENAME
+    
     echo "NEW ISO $ISO_FILENAME is ready"
 }
 
@@ -137,12 +163,15 @@ while true ; do
 done
 
 for arg ; do
-    if [ $arg = 'fetch' ] ; then
-        fetch_iso
+    if [ $arg = 'fetch' ]; then
+	fetch_iso
     fi
+
     if [ $arg = 'layout' ] ; then
         create_layout
+    #    cleanup_layout
     fi
+    
     if [ $arg = 'finish' ] ; then
         create_newiso
     fi
