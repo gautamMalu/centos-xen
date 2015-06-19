@@ -1,4 +1,4 @@
-# Centos 6.6 Xen iso Builder
+# Centos 7 Xen iso Builder
 
 This repo allows one to create a custom CentOS 7 iso which delivers Xen 4.4 stack installed over CentOS 7 minmal install.
 
@@ -42,7 +42,9 @@ sudo ./build_Xen_iso.sh layout
 sudo ./build_Xen_iso.sh finish
 ```
 
-Or `sudo ./build_Xen_iso.sh fetch layout finish`.
+Or
+
+`sudo ./build_Xen_iso.sh fetch layout finish`
 
 The resulting ISO will be ready to boot and install a clean image ready for
 with Xen working. 
