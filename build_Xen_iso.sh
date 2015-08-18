@@ -7,13 +7,18 @@ MIRROR=http://centosmirror.go4hosting.in/centos/7/isos/x86_64
 CUR_TIME=`date +%FT%TZ`
 DVD_LAYOUT=./c7-min
 DVD_TITLE='C7-xen'
-UPDATES_IMAGE_DIR=/home/gautam/XenInBox
 ISO_DIR=./isos
 CUSTOM_RPMS=./rpms
 ISO_FILENAME=c7-xen.iso
 MOUNT_POINT=/mnt
 ISO=CentOS-7-x86_64-Minimal-1503-01.iso
 ANACONDA_DIR=./XenInBox
+XenCloudImages=./XenCloudImages
+CentOS_7_VmImage=CentOS-7-x86_64-XenCloud.qcow2.xz
+CentOS_7_VmImage_src=http://183.82.4.49/cloud_images/CentOS-7-x86_64-XenCloud.qcow2.xz
+CentOS_6_VmImage=CentOS-6-x86_64-XenCloud.qcow2.xz
+CentOS_6_VmImage_src=http://183.82.4.49/cloud_images/CentOS-6-x86_64-XenCloud.qcow2.xz
+
 
 function fetch_iso() {
     if [ ! -d $ISO_DIR ]; then
@@ -22,7 +27,7 @@ function fetch_iso() {
     
     if [ ! -e $ISO_DIR/$ISO ]; then
         echo "No local copy of $ISO. Fetching latest $ISO"
-        curl  -o $ISO_DIR/$ISO $MIRROR/$ISO
+        curl -o $ISO_DIR/$ISO $MIRROR/$ISO
     fi
     
     echo "Checking to see if we have the latest $ISO:"
@@ -79,16 +84,27 @@ function modify_boot_menu() {
 }
 
 function add_VM_images() {
+    if [ ! -d $XenCloudImages ]; then
+        mkdir -p $XenCloudImages
+    fi
+    
    echo "Adding CentOS-7 VM image"
-   cp ./CentOS-7-x86_64-XenCloud.qcow2.xz $DVD_LAYOUT
-   echo "Adding CentOS-6 VM image"
-   cp ./CentOS-6-x86_64-XenCloud.qcow2.xz $DVD_LAYOUT  
-   echo "Adding xlConfig files"
-   cp ./CentOS-7-demoVm.cfg $DVD_LAYOUT
-   cp ./CentOS-6-demoVm.cfg $DVD_LAYOUT
+   if [ ! -e $XenCloudImages/$CentOS_7_VmImage ];then
+       echo "$CentOS_7_VmImage doesn't exist downloading now"
+       curl -o $XenCloudImages/$CentOS_7_VmImage $CentOS_7_VmImage_src
+   fi
+   cp $XenCloudImages/$CentOS_7_VmImage $DVD_LAYOUT
+   echo "Added CentOS-7 VM image"
  
-   
+   echo "Adding CentOS-6 VM image"
+   if [ ! -e $XenCloudImages/$CentOS_6_VmImage ];then
+       echo "$CentOS_6_VmImage doesn't exist downloading now"
+       curl -o $XenCloudImages/$CentOS_6_VmImage $CentOS_6_VmImage_src
+   fi
+   cp $XenCloudImages/$CentOS_6_VmImage $DVD_LAYOUT
+   echo "Added CentOS-6 VM image"
 }
+
 function update_anaconda(){
      if [ ! -d $ANACONDA_DIR ]; then
           git clone -b c7 https://github.com/gautamMalu/XenInBox
