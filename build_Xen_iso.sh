@@ -78,6 +78,17 @@ function modify_boot_menu() {
     cp ./isolinux.cfg $DVD_LAYOUT/isolinux/
 }
 
+function add_VM_images() {
+   echo "Adding CentOS-7 VM image"
+   cp ./CentOS-7-x86_64-XenCloud.qcow2.xz $DVD_LAYOUT
+   echo "Adding CentOS-6 VM image"
+   cp ./CentOS-6-x86_64-XenCloud.qcow2.xz $DVD_LAYOUT  
+   echo "Adding xlConfig files"
+   cp ./CentOS-7-demoVm.cfg $DVD_LAYOUT
+   cp ./CentOS-6-demoVm.cfg $DVD_LAYOUT
+ 
+   
+}
 function update_anaconda(){
      if [ ! -d $ANACONDA_DIR ]; then
           git clone -b c7 https://github.com/gautamMalu/XenInBox
@@ -101,6 +112,7 @@ function cleanup_layout() {
 
 
 function create_newiso() {
+    add_VM_images
     modify_boot_menu
     update_anaconda
     cleanup_layout
