@@ -94,6 +94,7 @@ function add_VM_images() {
        curl -o $XenCloudImages/$CentOS_7_VmImage $CentOS_7_VmImage_src
    fi
    cp $XenCloudImages/$CentOS_7_VmImage $DVD_LAYOUT
+   cp ./CentOS-7-demoVm.cfg $DVD_LAYOUT
    echo "Added CentOS-7 VM image"
  
    echo "Adding CentOS-6 VM image"
@@ -102,6 +103,7 @@ function add_VM_images() {
        curl -o $XenCloudImages/$CentOS_6_VmImage $CentOS_6_VmImage_src
    fi
    cp $XenCloudImages/$CentOS_6_VmImage $DVD_LAYOUT
+   cp ./CentOS-6-demoVm.cfg $DVD_LAYOUT
    echo "Added CentOS-6 VM image"
 }
 
