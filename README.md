@@ -1,7 +1,18 @@
 # Centos 7 Xen iso Builder
 
-This repo allows one to create a custom CentOS 7 iso which delivers Xen 4.4 stack installed over CentOS 7 minmal install.
+This repo allows one to create a custom CentOS 7 iso which delivers Xen 4.4 stack installed over CentOS 7 minmal install. This also delivers 2 demo VMs (CentOS-6 and CentOS-7) along with its configuration files. For networking in Demo VMs it configures a network-bridge named xenbr0 with default network-interface during installation as its slave.
 
+It requires minimum 15 GB space on hard disk to install both demo VMs. if there is not sufficient space for both VMs it will check whether it has sufficient space for single VM and it yes then it will install single c7-demo otherwise it will proceed without demo VMs. Both demo VMs are lvm backed. Size of demo VMs is 4GiB. After installation you can find the base images ( qcow2 ) of demo VMs in /srv/xen directory. which you can use to create more VMs. On firstboot for each VMs user will given root password, and will be advised to change it immediately after login.
+
+The installation itself doesn't require internet connection, but it requires internet connection for bridge networking setup. It will use the default interface used during installation for bridge-networking. I am using nmcli for bridge-networking setup, it doesn't support wifi interfaces as bridage-slave, ethernet interfaces works just fine.
+
+After installation you can see 2 xl config scripts CentOS-6-demoVm.cfg and CentOS-7-demoVm.cfg in /root directory.
+
+To run CentOS-6 demo VM: 
+`xl create -c CentOS-6-demoVm.cfg`
+
+To run CentOS-7 demo VM: 
+`xl create -c CentOS-7-demoVm.cfg`
 
 ## Requirements
 
