@@ -109,7 +109,8 @@ function add_VM_images() {
 
 function update_anaconda(){
      if [ ! -d $ANACONDA_DIR ]; then
-          git clone -b c7 https://github.com/gautamMalu/XenInBox
+          git submodule init
+          git submodule update
      fi
      pushd $ANACONDA_DIR > /dev/null 2>&1
      git pull
