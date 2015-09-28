@@ -3,21 +3,22 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-MIRROR=http://centosmirror.go4hosting.in/centos/7/isos/x86_64
+#MIRROR=http://centosmirror.go4hosting.in/centos/7/isos/x86_64
+MIRROR=http://centos.excellmedia.net/7/isos/x86_64/
 CUR_TIME=`date +%FT%TZ`
 DVD_LAYOUT=./c7-min
 DVD_TITLE='C7-xen'
 ISO_DIR=./isos
-CUSTOM_RPMS=./rpms
+CUSTOM_RPMS=./XenRpms/rpms
 ISO_FILENAME=c7-xen.iso
 MOUNT_POINT=/mnt
 ISO=CentOS-7-x86_64-Minimal-1503-01.iso
 ANACONDA_DIR=./XenInBox
 XenCloudImages=./XenCloudImages
 CentOS_7_VmImage=CentOS-7-x86_64-XenCloud.qcow2.xz
-CentOS_7_VmImage_src=http://183.82.4.49/cloud_images/CentOS-7-x86_64-XenCloud.qcow2.xz
+CentOS_7_VmImage_src=https://goo.gl/Cwtg22
 CentOS_6_VmImage=CentOS-6-x86_64-XenCloud.qcow2.xz
-CentOS_6_VmImage_src=http://183.82.4.49/cloud_images/CentOS-6-x86_64-XenCloud.qcow2.xz
+CentOS_6_VmImage_src=https://goo.gl/LsOidm
 
 
 function fetch_iso() {
@@ -47,7 +48,15 @@ function fetch_iso() {
     fi
 }
 
+#to fetch rpms and customized anconda installer which are added as submodules
+function getSubModules(){ 
+    git submodule init
+    git submodule update
+
+}
+
 function create_layout() {
+    getSubModules
     echo "Creating ISO Layout"
     if [ -d $DVD_LAYOUT ]; then
         echo "Layout $DVD_LAYOUT exists...nuking"
@@ -78,6 +87,7 @@ function create_layout() {
     echo "Finished Populating Layout"
 }
 
+
 function modify_boot_menu() {
     echo "Modifying grub boot menu"
     cp ./isolinux.cfg $DVD_LAYOUT/isolinux/
@@ -91,7 +101,7 @@ function add_VM_images() {
    echo "Adding CentOS-7 VM image"
    if [ ! -e $XenCloudImages/$CentOS_7_VmImage ];then
        echo "$CentOS_7_VmImage doesn't exist downloading now"
-       curl -o $XenCloudImages/$CentOS_7_VmImage $CentOS_7_VmImage_src
+       curl -Ls -o $XenCloudImages/$CentOS_7_VmImage $CentOS_7_VmImage_src
    fi
    cp $XenCloudImages/$CentOS_7_VmImage $DVD_LAYOUT
    cp ./CentOS-7-demoVm.cfg $DVD_LAYOUT
@@ -100,7 +110,7 @@ function add_VM_images() {
    echo "Adding CentOS-6 VM image"
    if [ ! -e $XenCloudImages/$CentOS_6_VmImage ];then
        echo "$CentOS_6_VmImage doesn't exist downloading now"
-       curl -o $XenCloudImages/$CentOS_6_VmImage $CentOS_6_VmImage_src
+       curl -Ls -o $XenCloudImages/$CentOS_6_VmImage $CentOS_6_VmImage_src
    fi
    cp $XenCloudImages/$CentOS_6_VmImage $DVD_LAYOUT
    cp ./CentOS-6-demoVm.cfg $DVD_LAYOUT
@@ -113,6 +123,7 @@ function update_anaconda(){
           git submodule update
      fi
      pushd $ANACONDA_DIR > /dev/null 2>&1
+     git checkout c7
      git pull
      ./scripts/makeupdates -t c7-working
      popd > /dev/null 2>&1
