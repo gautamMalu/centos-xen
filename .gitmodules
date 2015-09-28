@@ -1,3 +1,6 @@
 [submodule "XenInBox"]
 	path = XenInBox
 	url = https://github.com/gautamMalu/XenInBox
+[submodule "XenRpms"]
+	path = XenRpms
+	url = https://github.com/gautamMalu/XenRpms
