@@ -6,7 +6,9 @@ It requires minimum 15 GB space on hard disk to install both demo VMs. if there 
 
 The installation itself doesn't require internet connection, but it requires internet connection for bridge networking setup. It will use the default interface used during installation for bridge-networking. I am using nmcli for bridge-networking setup, it doesn't support wifi interfaces as bridage-slave, ethernet interfaces works just fine.
 
-After installation you can see 2 xl config scripts CentOS-6-demoVm.cfg and CentOS-7-demoVm.cfg in /root directory.
+After installation you can see 2 xl config scripts CentOS-6-demoVm.cfg and CentOS-7-demoVm.cfg in /root directory. The kickstart scripts used to install these VMs can be found at https://github.com/gautamMalu/ks4CentOSXen
+
+The qcow2 VM images of both VMs is stored in /srv/xen/ folder. These images can be used as template imgages to install more VMs.
 
 To run CentOS-6 demo VM: 
 `xl create -c CentOS-6-demoVm.cfg`
